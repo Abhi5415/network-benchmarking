@@ -1,0 +1,23 @@
+{
+  "name": "performance-benchmarking",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "stats-lite": "^2.2.0",
+    "websocket": "^1.0.28"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhi5415/network-benchmarking.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhi5415/network-benchmarking/issues"
+  },
+  "homepage": "https://github.com/Abhi5415/network-benchmarking#readme"
+}

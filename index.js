@@ -2,11 +2,53 @@ let WebSocket = require("websocket").client;
 let client = new WebSocket();
 var stats = require("stats-lite");
 
-let index = 1;
-let currencies = ["ETHBTC", "ETHUSD", "BTCUSD"];
 let networkPerformance = [];
+let recievedCurrencies = new Map();
+let messages = 0;
 let startTime = 0;
-let interval = 10000;
+let interval = 5000;
+let index = 1;
+let currencies = [
+  "ETHBTC",
+  "ETHUSD",
+  "BTCUSD",
+  "DASHBTC",
+  "DOGEBTC",
+  "DOGEUSD",
+  "EMCBTC",
+  "LSKBTC",
+  "LTCUSD",
+  "NXTBTC",
+  "SBDBTC",
+  "SCBTC",
+  "STEEMBTC",
+  "XDNBTC",
+  "XEMBTC",
+  "XMRBTC",
+  "ARDRBTC",
+  "ZECBTC",
+  "WAVESVTC",
+  "MAIDBTC",
+  "AMPBTC",
+  "DGDBTC",
+  "SNGLSBTC",
+  "1STBTC",
+  "TRSTBTC",
+  "TIMEBTC",
+  "GNOBTC",
+  "REPBTC",
+  "XMRUSD",
+  "XMRUSD",
+  "DASHUSD",
+  "NXTUSD",
+  "ZRCBTC",
+  "BOSBTC",
+  "DCTBTC",
+  "ANTBTC",
+  "AEONBTC",
+  "GUPBTC",
+  "PLUBTC"
+];
 
 let subQuery = symbol => {
   let query = {
@@ -22,27 +64,20 @@ let subQuery = symbol => {
 let startUp = connection => {
   startTime = Date.now();
   connection.sendUTF(subQuery(currencies[0], 0));
-};
-
-let humanReadableOutput = () => {
-  console.log(`For: ${index + 1} connections`);
-  console.log(`Mean: ${stats.mean(measured)}`);
-  console.log(`Median: ${stats.median(measured)}`);
-  console.log(`Mode: ${stats.mode(measured)}`);
-  console.log(`Deviation: ${stats.stdev(measured)}`);
-  console.log(`25th - Percentile: ${stats.percentile(measured, 0.25)}`);
-  console.log(`75th - Percentile: ${stats.percentile(measured, 0.75)}`);
+  setTimeout(() => {}, 1000); // waiting for the initial bumps to clear out
 };
 
 let measurePerformance = connection => {
   // complete last round of measurements
-  let measured = networkPerformance;
+  let measured = networkPerformance; // to avoid updates while calculations are made
+  let messagesPerSecond = (messages / interval) * 1000;
   if (measured.length != 0) {
-    humanReadableOutput();
     console.log(
-      `csv ouput: ${index + 1}, ${stats.mean(measured)}, ${stats.median(measured)}, ${stats.mode(
-        measured
-      )}, ${stats.stdev(measured)}, ${stats.percentile(measured, 0.25)}, ${stats.percentile(measured, 0.75)}`
+      `${index}, ${Math.round(stats.mean(measured) * 10) / 10}, ${stats.median(measured)}, ${Math.round(
+        stats.stdev(measured) * 10
+      ) / 10}, ${stats.percentile(measured, 0.25)}, ${stats.percentile(measured, 0.75)}, ${Math.round(
+        messagesPerSecond * 10
+      ) / 10}, ${recievedCurrencies.size}`
     );
   }
 
@@ -51,12 +86,12 @@ let measurePerformance = connection => {
 
   if (index == currencies.length) {
     console.log("Testing complete");
-    return;
+    process.exit();
   }
 
-  console.log(`Starting performance benchmarks: ${index + 1} currency`);
-
   networkPerformance = [];
+  messages = 0;
+  recievedCurrencies.clear();
   startTime = Date.now();
   index++;
 };
@@ -80,7 +115,13 @@ client.on("connect", function(connection) {
       response = response.params;
       let serverTime = new Date(response.timestamp);
       let receptionTime = new Date();
+
+      recievedCurrencies.set(
+        response.symbol,
+        recievedCurrencies.get(response.symbol) === undefined ? 1 : recievedCurrencies.get(response.symbol) + 1
+      );
       networkPerformance.push(receptionTime.getTime() - serverTime.getTime());
+      messages++;
       if (startTime + interval < Date.now()) measurePerformance(connection);
     }
   });
